@@ -10,43 +10,35 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late Future<List<Post>> futurePosts;
+  late Future<List<User>> futureUsers;
 
   @override
   void initState() {
     super.initState();
-    futurePosts = fetchPosts();
+    futureUsers = fetchUsers();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Posts',
+      title: 'Users',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: Text('Posts'),
+          title: Text('Users'),
         ),
-        body: FutureBuilder<List<Post>>(
-          future: futurePosts,
+        body: FutureBuilder<List<User>>(
+          future: futureUsers,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              List<Post>? posts = snapshot.data;
+              List<User>? users = snapshot.data;
               return ListView(
-                children: posts!
-                    .map((post) => Card(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              ListTile(
-                                leading: Icon(Icons.book),
-                                title: Text(post.title),
-                                subtitle: Text(post.body),
-                              ),
-                            ],
-                          ),
+                children: users!
+                    .map((user) => ListTile(
+                          title: Text(user.firstName + ' ' + user.lastName),
+                          subtitle: Text(user.email),
                         ))
                     .toList(),
               );
@@ -62,32 +54,38 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-Future<List<Post>> fetchPosts() async {
-  final response =
-      await http.get(Uri.parse('https://jsonplaceholder.typicode.com/posts'));
+Future<List<User>> fetchUsers() async {
+  final response = await http.get(Uri.parse('https://dummyjson.com/users'));
 
   if (response.statusCode == 200) {
     // If the server returns a 200 OK response, parse the JSON.
-    List<dynamic> parsedJson = jsonDecode(response.body);
-    return parsedJson.map((json) => Post.fromJson(json)).toList();
+    Map<String, dynamic> parsedJson = jsonDecode(response.body);
+    List<dynamic> usersJson = parsedJson['users'];
+    return usersJson.map((json) => User.fromJson(json)).toList();
   } else {
     // If the server returns a non-200 response, throw an error.
-    throw Exception('Failed to load posts');
+    throw Exception('Failed to load users');
   }
 }
 
-class Post {
+class User {
   final int id;
-  final String title;
-  final String body;
+  final String firstName;
+  final String lastName;
+  final String email;
 
-  Post({required this.id, required this.title, required this.body});
+  User(
+      {required this.id,
+      required this.firstName,
+      required this.lastName,
+      required this.email});
 
-  factory Post.fromJson(Map<String, dynamic> json) {
-    return Post(
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
       id: json['id'],
-      title: json['title'],
-      body: json['body'],
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      email: json['email'],
     );
   }
 }
